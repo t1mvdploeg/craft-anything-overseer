@@ -1,0 +1,22 @@
+name: test
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Pester 3.4.0 (the tests use Pester 3 syntax)
+        run: Install-Module Pester -RequiredVersion 3.4.0 -Force -SkipPublisherCheck -Scope CurrentUser
+      - name: Pester (includes the leak test, paths only)
+        run: |
+          Import-Module Pester -RequiredVersion 3.4.0
+          Invoke-Pester tests -EnableExit
+      - name: Watch monitor
+        shell: bash
+        run: bash tests/watch.test.sh
+      - name: Usage helper
+        shell: bash
+        run: bash tests/write-usage.test.sh

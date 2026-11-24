@@ -1,0 +1,121 @@
+<!doctype html>
+<!-- Source of hero.png. Render: chrome --headless --hide-scrollbars --force-device-scale-factor=2 --virtual-time-budget=5000 --window-size=1200,620 --screenshot=hero.png hero.html -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Craft Anything Overseer hero</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=block">
+<style>
+  :root {
+    --canvas: #efede8; --ink: #16161a; --acc: #4e7bfb;
+    --term: #151518; --line: #26262b; --text: #d8d8dd; --mute: #74747e; --dim: #4c4c55;
+    --ok: #5fd08a; --warn: #f2b84b; --hang: #ff8a6b; --ca: #121316;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 620px; overflow: hidden; }
+  body { background: var(--canvas); font-family: 'Inter Tight', sans-serif; color: var(--ink); position: relative; }
+
+  .win { position: absolute; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 30px 60px -20px rgba(22,22,26,.38), 0 0 0 1px rgba(22,22,26,.10); }
+  .bar { display: flex; align-items: center; padding: 0 14px 0 16px; font: 500 12.5px 'Inter Tight'; color: var(--mute); }
+  .bar .name { flex: 1; }
+  .bar .name b { color: var(--text); font-weight: 500; }
+  .ctl { display: flex; gap: 18px; align-items: center; }
+  .ctl i { display: block; width: 10px; height: 10px; position: relative; }
+  .ctl .min::after { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 1px; background: #6a6a73; }
+  .ctl .max { border: 1px solid #6a6a73; border-radius: 1.5px; }
+  .ctl .cls::before, .ctl .cls::after { content: ''; position: absolute; left: -1px; right: -1px; top: 4.5px; height: 1px; background: #6a6a73; transform: rotate(45deg); }
+  .ctl .cls::after { transform: rotate(-45deg); }
+
+  /* Craft Anything window: the real New project screen, unaltered */
+  .ca { left: 44px; top: 44px; width: 432px; background: var(--ca); }
+  .ca .bar { height: 32px; background: #1a1b1f; border-bottom: 1px solid #222328; }
+  .ca img { display: block; width: 432px; height: auto; }
+
+  /* overseer terminal (Claude Code) */
+  .term { left: 466px; top: 76px; width: 690px; height: 506px; background: var(--term); }
+  .term .bar { height: 40px; border-bottom: 1px solid var(--line); }
+  .term .eye { width: 20px; height: 20px; margin-right: 10px; }
+
+  .log { padding: 18px 22px; font: 400 12.4px/1 'JetBrains Mono', monospace; color: var(--text); }
+  .row { display: grid; grid-template-columns: 46px 82px 1fr; align-items: baseline; height: 26px; white-space: nowrap; }
+  .t { color: var(--dim); }
+  .tag { font-weight: 600; font-size: 11px; letter-spacing: .04em; }
+  .msg { overflow: hidden; text-overflow: ellipsis; }
+  .mute { color: var(--mute); }
+  .act { grid-column: 2 / 4; display: flex; gap: 9px; color: var(--text); overflow: hidden; }
+  .act::before { content: '\25B8'; color: var(--acc); }
+  .act .k { color: var(--mute); }
+  .gap { height: 12px; }
+  .sent { color: #fff; }
+  .s-status { color: #8fa9ff; } .s-question, .s-quiet { color: var(--warn); }
+  .s-done { color: var(--ok); } .hang { color: var(--hang); } .okc { color: var(--ok); }
+  .q { color: #fff; }
+
+  /* round summary */
+  .card { position: absolute; left: 44px; top: 438px; width: 432px;
+    background: #fbfaf8; border-radius: 14px; padding: 18px 20px 16px;
+    box-shadow: 0 24px 50px -18px rgba(22,22,26,.32), 0 0 0 1px rgba(22,22,26,.06); }
+  .card .top { display: flex; align-items: center; gap: 10px; }
+  .card h2 { font: 600 18px 'Inter Tight'; letter-spacing: -.01em; }
+  .card h2 span { font: 500 13px 'Inter Tight'; color: #8a8a93; margin-left: 6px; }
+  .pill { margin-left: auto; font: 600 10.5px 'Inter Tight'; letter-spacing: .04em; color: #1d7a45; background: #e2f4e8; padding: 4px 8px; border-radius: 6px; }
+  .facts { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; margin-top: 12px; font: 400 12.5px 'Inter Tight'; color: #6b6b74; }
+  .facts b { display: block; font: 500 14px 'Inter Tight'; color: var(--ink); margin-bottom: 2px; }
+  .meter { margin-top: 14px; font: 400 12px 'Inter Tight'; color: #8a8a93; }
+  .meter p { display: flex; justify-content: space-between; }
+  .meter p b { color: var(--ink); font-weight: 500; }
+  .track { position: relative; height: 7px; border-radius: 4px; background: #e9e7e2; margin: 7px 0 0; overflow: hidden; }
+  .track .was { position: absolute; inset: 0 auto 0 0; width: 31%; background: var(--ink); }
+  .track .now { position: absolute; inset: 0 auto 0 31%; width: 27%; background: var(--acc); }
+  .track .th { position: absolute; top: 0; bottom: 0; left: 85%; width: 2px; background: #b9b7b1; }
+</style>
+</head>
+<body>
+  <div class="win ca">
+    <div class="bar"><span class="name"><b>Craft Anything</b></span><span class="ctl"><i class="min"></i><i class="max"></i><i class="cls"></i></span></div>
+    <img src="craft-anything-new-project.png" alt="">
+  </div>
+
+  <div class="card">
+    <div class="top"><h2>Round 4<span>my-app · 69 min</span></h2><span class="pill">CHECKS PASSED</span></div>
+    <div class="facts">
+      <div><b>48 passed</b>tests</div>
+      <div><b>1</b>question answered</div>
+      <div><b>find /</b>hang killed</div>
+    </div>
+    <div class="meter">
+      <p><span>5-hour usage, pauses itself at 85%</span><b>31% → 58%</b></p>
+      <div class="track"><div class="was"></div><div class="now"></div><div class="th"></div></div>
+    </div>
+  </div>
+  <div class="win term">
+    <div class="bar">
+      <img class="eye" src="mark-dark.svg" alt="">
+      <span class="name"><b>my-app</b> &nbsp;·&nbsp; overseer, round 4 of 7</span>
+      <span class="ctl"><i class="min"></i><i class="max"></i><i class="cls"></i></span>
+    </div>
+    <div class="log">
+      <div class="row"><span class="t">14:01</span><span class="act"><span class="k">fresh-session.ps1</span>FRESH OK</span></div>
+      <div class="row"><span class="t">14:02</span><span class="act"><span class="k">gui.ps1 -action paste</span><span class="sent">round 4</span><span class="mute">"CSV export, empty states, settings copy"</span></span></div>
+      <div class="row"><span class="t"></span><span class="act"><span class="k">find-hangs.ps1 -Count</span>BUILDERS 1</span></div>
+      <div class="gap"></div>
+      <div class="row"><span class="t">14:06</span><span class="tag s-status">STATUS</span><span class="msg"><span class="mute">usage</span> 31%<span class="mute">, step</span> build<span class="mute">, last activity</span> 14:05:51<span class="mute">, turns</span> 4 <span class="mute">|</span></span></div>
+      <div class="row"><span class="t"></span><span class="t"></span><span class="msg mute">14:05:48 said Reading src/export and the goals</span></div>
+      <div class="row"><span class="t">14:19</span><span class="tag s-question">QUESTION</span><span class="msg">0007.request.json</span></div>
+      <div class="row"><span class="t"></span><span class="act"><span class="q">"Include archived items in the CSV?"</span></span></div>
+      <div class="row"><span class="t"></span><span class="act"><span class="k">answered</span>Active items only. Inside the goals, no need to ask.</span></div>
+      <div class="gap"></div>
+      <div class="row"><span class="t">14:37</span><span class="tag s-quiet">QUIET</span><span class="msg">15 min</span></div>
+      <div class="row"><span class="t"></span><span class="act"><span class="k">find-hangs.ps1</span><span class="hang">HANG pid=8124 age=16m name=find.exe cmd=find / -name *.csv</span></span></div>
+      <div class="row"><span class="t"></span><span class="act"><span class="k">find-hangs.ps1 -Kill 8124</span>KILLED pid 8124</span></div>
+      <div class="gap"></div>
+      <div class="row"><span class="t">15:11</span><span class="tag s-done">DONE</span><span class="msg"></span></div>
+      <div class="row"><span class="t"></span><span class="act"><span class="k">round-usage.sh</span>ROUND input=1284310 output=41872 turns=31</span></div>
+      <div class="row"><span class="t"></span><span class="act"><span class="k">checks</span>npm test <span class="okc">48 passed</span> &nbsp;npm run lint <span class="okc">clean</span></span></div>
+      <div class="row"><span class="t"></span><span class="act"><span class="k">next</span>round 5 from goals.md</span></div>
+    </div>
+  </div>
+
+</body>
+</html>

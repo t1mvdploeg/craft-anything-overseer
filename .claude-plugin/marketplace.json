@@ -1,0 +1,12 @@
+{
+  "name": "craft-anything-overseer",
+  "description": "A Claude Code skill that watches and steers the Craft Anything desktop app while it rebuilds an app.",
+  "owner": { "name": "Tim van der Ploeg", "url": "https://github.com/t1mvdploeg" },
+  "plugins": [
+    {
+      "name": "craft-anything-overseer",
+      "source": "./",
+      "description": "Watch and steer the Craft Anything builder from a Claude Code session. Windows only."
+    }
+  ]
+}

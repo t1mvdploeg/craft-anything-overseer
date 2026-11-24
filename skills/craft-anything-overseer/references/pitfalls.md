@@ -1,0 +1,28 @@
+# Pitfalls
+
+Each entry: symptom, then what the overseer does. Entries 1-12 are Craft Anything bugs.
+
+## Craft Anything bugs
+
+1. **Builder hangs forever waiting for a subagent's output file.** Symptom: the main agent polls `tasks/<id>.output` in a loop; the subagent already handed back but the file stays empty; silence for 10+ minutes. Overseer: find the waiting shell with `windows/find-hangs.ps1 -ProjectDir <p>`, kill it with `-Kill <pid>`, then send a short "continue". Every round prompt says never to poll `tasks/*.output`.
+2. **Background subagents are killed 10 minutes after the turn ends.** Symptom: work left half done after the main agent closes its turn. Overseer: every round prompt says "do not end your turn while subagents are running". After a half-done end, send a short message to finish the open items.
+3. **Empty `agent_session` breaks the next run.** Symptom: `"agent_session": ""` makes the app run `claude -p --resume ''`, which fails and writes an empty id back. Overseer: always `null`, never `""`; `windows/fresh-session.ps1` does this with the app closed.
+4. **No way to start a fresh conversation; context grows without limit.** Symptom: each step costs hundreds of thousands of input tokens and the usage limit melts. Overseer: start every round in a fresh conversation with `windows/fresh-session.ps1` (app closed, `agent_session` null, app reopened); state is carried over by HANDOFF/CLAUDE.md.
+5. **A turn ends immediately with 0 tokens.** Symptom: the log says the turn ended with "0 tokens in, 0 out", also right after Pause plus a resume message. Overseer: send one more short message ("continue"). If it repeats, tell the user.
+6. **Run goes silent when the usage limit is hit.** Symptom: "You've hit your 5-hour limit", subagents running, nothing resumes after the reset. Overseer: pause at `usageThreshold` (85 %) before the limit is hit (`monitor/watch.sh` prints USAGE), set a timer for the reset time, then send the resume variant of `templates/round.md`.
+7. **Esc opens the "new project" screen.** Symptom: Esc in the chat input jumps away. Overseer: never send Esc to Craft Anything. If it happened, go back via the project name in the sidebar and start nothing.
+8. **The "Approvals" link sits right under the send button.** Symptom: a slightly low click opens Approvals. Overseer: never click Approvals; use the exact `buttons.send` position and check with a screenshot first.
+9. **Old windowless process stays alive.** Symptom: a Craft Anything process from the day before runs next to the new one. Overseer: before a restart, list the Craft Anything processes; stop only stale windowless ones of this project, ask the user if unsure.
+10. **Agent shell commands hang 30+ minutes without a timeout.** Symptom: `find /`, or ffmpeg with an infinite filter, runs for an hour while the run waits. Overseer: on QUIET run `windows/find-hangs.ps1 -ProjectDir <p>` and kill the offender with `-Kill <pid>`. Prevent it with the "Never" list in the round prompt.
+11. **Pause runs the checks and shows "Ready" although work is half done.** Symptom: after Pause the app says "Your app is ready" while the plan has open items. Overseer: DONE only when step is `done` AND no builder process is left. Ready alone is a pause, not a finish.
+12. **Main agent waits on subagents with blind sleep loops.** Symptom: `until [ $SECONDS -gt 1200 ]; do sleep 30; done` while the subagents finished after a few minutes. Overseer: on QUIET find the sleeping shell with `find-hangs.ps1` and kill it so the main agent wakes up; forbid sleep loops in the round prompt.
+
+## Overseer pitfalls
+
+13. **The build log runs one hour behind the clock.** Symptom: log timestamps look old. Overseer: judge quiet time by file modification time, not by the logged time.
+14. **Pasting over remote desktop fails.** Symptom: the first paste attempts leave the input field empty, the window width changes. Overseer: after every paste take a screenshot and check the field before pressing send; retry, and if it keeps failing ask the user to paste from the clipboard or close the remote session briefly.
+15. **The monitor expires after 30 minutes.** Symptom: no more events although the build runs. Overseer: restart `monitor/watch.sh` about every 25 minutes; kill old monitor processes first so there are no duplicates.
+16. **The window size changes.** Symptom: clicks miss because the Craft Anything window has a different size than when the positions were measured. Overseer: if the size reported by `windows/gui.ps1` differs from `buttons.windowSize`, take a screenshot and measure the input field and send button again before clicking.
+17. **"not in front, refusing to click".** Symptom: `gui.ps1` refuses because another window (the user's or a test window) has focus. Overseer: do not force it; wait and retry.
+18. **Console windows pile up and slow the machine.** Symptom: dozens of terminal windows from ffmpeg/ffprobe runs. Overseer: run `windows/close-console-windows.ps1` as a stopgap and tell the builder to start all child processes hidden, with a test that enforces it.
+19. **Moving files the builder uses.** Symptom: a subagent breaks after a folder is moved. Overseer: do not move or rename anything under the project or work folders while a round runs.
