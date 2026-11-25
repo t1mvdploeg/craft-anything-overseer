@@ -33,8 +33,9 @@ In Claude Code:
 ```
 
 1. In your working folder, copy `skills/craft-anything-overseer/craft-overseer.example.json` to `craft-overseer.json` and fill in your project (`projectDir` such as `%USERPROFILE%\Documents\Craft Anything\my-app`, a goals file, your `checks` such as `npm test`).
-2. Optional, for usage-aware pausing: add `statusline/write-usage.sh` to your Claude Code statusline. It writes the rate limits to `~/.claude/usage-limits.json` (the `usageFile` setting). Without that file usage shows as `?` and nothing pauses.
-3. Say "watch Craft Anything" or type `/craft-anything-overseer`.
+2. **In Craft Anything, set the builder's approvals to Allow** for the project: click **Approvals** (right under the chat input), set every row (Reading the web, Other commands, Files outside the project, Pushing and publishing, Deleting outside the project, System changes, Other tools) to **Allow**. It is stored per project in `craft.json` (`"approvals"`). Without it the builder stops at a "May I allow ...?" card (status *Needs you*) and waits: the overseer never clicks Approvals, so the round stalls until you answer. Through `craft-anything-cli` an unanswered approval is declined at once. Allow means the builder runs commands and changes things outside the project without asking: only do this for projects you trust.
+3. Optional, for usage-aware pausing: add `statusline/write-usage.sh` to your Claude Code statusline. It writes the rate limits to `~/.claude/usage-limits.json` (the `usageFile` setting). Without that file usage shows as `?` and nothing pauses.
+4. Say "watch Craft Anything" or type `/craft-anything-overseer`.
 
 Needs Windows, PowerShell 7, Git Bash and `jq`.
 
