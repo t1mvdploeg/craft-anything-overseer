@@ -22,6 +22,8 @@ The user wants to save usage.
 
 ## Never
 
+These rules hold for you and for every subagent: copy this list into each subagent's task.
+
 - `find /` or any search over the whole disk. Search only inside the app folder and your own work folder.
 - ffmpeg without a guaranteed end (for example `tpad=stop=-1` pads forever).
 - Blind `sleep` loops, or polling `tasks/*.output` files.
