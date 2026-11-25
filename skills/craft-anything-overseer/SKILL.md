@@ -5,9 +5,29 @@ description: Use when a Claude Code session should watch and steer the Craft Any
 
 # Craft Anything overseer
 
-You are the watcher. Craft Anything (CA) runs the builder (`claude -p`); you send rounds, monitor, unblock and check. Windows only. Everything you write for the builder is English. Messages to the user are short, answer first, in the user's language.
+You are the watcher. Craft Anything (CA) runs the builder (`claude -p`); you send rounds, monitor, unblock and check. Windows and macOS: on macOS (`uname` is `Darwin`) read the macOS section first and use its commands wherever this file names a Windows one. Everything you write for the builder is English. Messages to the user are short, answer first, in the user's language.
 
 `S` = this skill's folder. Pitfalls with symptoms and fixes: `S\references\pitfalls.md` (numbers below refer to it). A worked example: `S\references\example.md`. In the Bash tool use forward slashes (`S/windows/...`) or the PowerShell tool; unquoted backslashes get lost in Bash.
+
+## macOS
+
+Same workflow, other commands. Paths are POSIX (`~/...`); `%APPDATA%` is `~/Library/Application Support/craft-anything` and `.../ai.storyteller.craft-anything`. Projects live in the projects folder from CA Settings: ask the user for `projectDir`, do not guess. Settings template: `S/craft-overseer.macos.example.json` (instead of the Windows one in Attach step 1).
+
+| Windows (this file) | macOS |
+|---|---|
+| `find-hangs.ps1 -ProjectDir <p> -Count` | `bash S/macos/find-hangs.sh <p> --count` |
+| `find-hangs.ps1 -ProjectDir <p>` / `-Kill <pid>` | `bash S/macos/find-hangs.sh <p>` / `--kill <pid>` |
+| `Show-Builders '<p>' -Show` (first live round) | `bash S/macos/find-hangs.sh <p> --show` |
+| `fresh-session.ps1 -ProjectDir <p> -Label <l> [-WhatIf]` | `bash S/macos/fresh-session.sh <p> <l> [--whatif]` |
+| `gui.ps1 -action info -out <png>` | `bash S/macos/gui.sh info --out <png>` |
+| `gui.ps1 -action paste -x1 X -y1 Y -text "..."` | `bash S/macos/gui.sh paste X Y "$(cat round-12.txt)" --out <png>` |
+| `gui.ps1 -action click -x1 X -y1 Y` | `bash S/macos/gui.sh click X Y` |
+| `close-console-windows.ps1` | not needed: no console windows pile up on macOS (18) |
+| `powercfg /requests`, screen lock off | `pmset -g assertions`; keep awake with `caffeinate -dims &` (note its pid in the handoff), screen lock off |
+
+- Builder rule: a `claude` process (or a `.../claude/versions/<v>` binary) under `craft-anything` or `craft-anything-cli`, or with the project dir in its command line or as its working directory. The watcher's own session is never counted. `watch.sh` uses it automatically on macOS.
+- GUI setup, once: `brew install cliclick`, then System Settings > Privacy & Security > Accessibility and Screen Recording: enable the app that runs Claude Code (Terminal, iTerm, or Claude). Without Accessibility `gui.sh` stops with an error; without Screen Recording the png may show only wallpaper, so always look at it. Coordinates are points relative to the window; `gui.sh` saves screenshots at point size, so measure in the png and pass the numbers as they are.
+- Send a round without clicking (preferred on macOS): `fresh-session.sh <p> <label> --no-open` (CA stays closed: one writer on craft.json), then run in the background (Bash `run_in_background`) `"/Applications/Craft Anything.app/Contents/MacOS/craft-anything-cli" rebuild --continue-in <projectDir> --backend "Claude Code" - "$(cat round-12.txt)"`. Resume after a pause: `... rebuild --continue-in <projectDir> --resume - resume`. The CLI has no pause command: on USAGE, `kill -INT` the `craft-anything-cli` process, then `--count` must reach 0 and `ps -axo pid,ppid,args | grep -i claude` must show nothing of this project; otherwise tell the user. Verify as in Send a round step 7. Not live-proven: on the first CLI round check that `build-activity.log` and `feed.json` are written (else `watch.sh` is blind: use the GUI path), that questions still land in `checks/asks` (not on the CLI's stdin), and record the result in `handoffFile`. If any of that fails, use the GUI path.
 
 ## Never
 

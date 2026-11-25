@@ -1,7 +1,7 @@
 {
   "name": "craft-anything-overseer",
-  "version": "0.1.0",
-  "description": "A Claude Code skill that watches and steers the Craft Anything desktop app while it rebuilds an app: sends rounds, monitors, kills hangs, pauses at the usage limit. Windows only.",
+  "version": "0.2.0",
+  "description": "A Claude Code skill that watches and steers the Craft Anything desktop app while it rebuilds an app: sends rounds, monitors, kills hangs, pauses at the usage limit. Windows and macOS.",
   "author": { "name": "Tim van der Ploeg" },
   "repository": "https://github.com/t1mvdploeg/craft-anything-overseer"
 }

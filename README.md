@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://github.com/t1mvdploeg/craft-anything-overseer/actions/workflows/test.yml"><img src="https://github.com/t1mvdploeg/craft-anything-overseer/actions/workflows/test.yml/badge.svg" alt="tests"></a>
   <img src="https://img.shields.io/badge/Claude%20Code-plugin-555" alt="Claude Code plugin">
-  <img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="Windows only">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-0078D4" alt="Windows and macOS">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license">
 </p>
 
@@ -37,6 +37,8 @@ In Claude Code:
 3. Say "watch Craft Anything" or type `/craft-anything-overseer`.
 
 Needs Windows, PowerShell 7, Git Bash and `jq`.
+
+**macOS**: needs `jq` and, for the GUI, `brew install cliclick` plus Accessibility and Screen Recording for the app that runs Claude Code. Copy `craft-overseer.macos.example.json` instead. Scripts are in `skills/craft-anything-overseer/macos/` (`find-hangs.sh`, `fresh-session.sh`, `gui.sh`); `watch.sh` picks them up on its own. Rounds can also go through `craft-anything-cli rebuild --continue-in` without clicking. Tests: `bash tests/macos.test.sh`. Not live-proven on a real round yet.
 
 ## What it does
 
@@ -77,7 +79,7 @@ In one long rebuild, sending each round to a fresh builder conversation with a f
 
 ## What it does not do
 
-- Windows only. The GUI scripts need an unlocked, awake screen.
+- Windows and macOS. The GUI scripts need an unlocked, awake screen.
 - Not live-proven yet: the builder process match and a real close and restart of CA. The skill checks both on the first live round.
 - The relay needs your own relay command; none is included.
 - It does not decide what to build: you approve a goals list, it works through it.

@@ -18,6 +18,7 @@ quiet=0; sinceStatus=$SE; doneSaid=0; failSaid=0; quietSaid=0; usageSaid=0
 # One shared builder rule lives in windows/builder.ps1 (claude.exe under craft-anything.exe, or project dir in its command line).
 builders() {
   [ -n "${WATCH_BUILDER_COUNT+x}" ] && { echo "$WATCH_BUILDER_COUNT"; return; }
+  [ "$(uname)" = Darwin ] && { bash "$(dirname "$HELPER")/../macos/find-hangs.sh" "$D" --count | awk '{print $2}'; return; }
   BH="$(to_win_path "$HELPER")" PD="$(to_win_path "$D")" powershell.exe -NoProfile -Command '. $env:BH; Show-Builders $env:PD' | tr -d '\r' | tail -1
 }
 # A restart must not repeat a DONE already reported for this round.

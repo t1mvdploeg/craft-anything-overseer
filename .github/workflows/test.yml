@@ -20,3 +20,13 @@ jobs:
       - name: Usage helper
         shell: bash
         run: bash tests/write-usage.test.sh
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: macOS scripts
+        run: bash tests/macos.test.sh
+      - name: Watch monitor
+        run: bash tests/watch.test.sh
+      - name: Usage helper
+        run: bash tests/write-usage.test.sh

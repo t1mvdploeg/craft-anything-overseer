@@ -6,7 +6,7 @@
     {
       "name": "craft-anything-overseer",
       "source": "./",
-      "description": "Watch and steer the Craft Anything builder from a Claude Code session. Windows only."
+      "description": "Watch and steer the Craft Anything builder from a Claude Code session. Windows and macOS."
     }
   ]
 }
