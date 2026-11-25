@@ -57,6 +57,17 @@ if ($WhatIf) {
     exit 0
 }
 
+# 0. The builder (claude -p, cwd = project) stops background subagents 10 min after its turn ends unless
+#    CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 (pitfall 2). CA passes the builder a filtered environment, so set it
+#    in the project's local Claude Code settings, which the builder reads.
+$sdir = Join-Path $ProjectDir '.claude'; $sfile = Join-Path $sdir 'settings.local.json'
+New-Item -ItemType Directory -Force $sdir | Out-Null
+$cfg = if (Test-Path -LiteralPath $sfile) { Get-Content -Raw -LiteralPath $sfile | ConvertFrom-Json } else { [pscustomobject]@{} }
+if (-not $cfg.env) { $cfg | Add-Member -NotePropertyName env -NotePropertyValue ([pscustomobject]@{}) -Force }
+$cfg.env | Add-Member -NotePropertyName CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS -NotePropertyValue '0' -Force
+[IO.File]::WriteAllText($sfile, ($cfg | ConvertTo-Json -Depth 10), $utf8)
+Write-Output 'builder setting: CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0'
+
 # 1. Close the app FIRST: it rewrites craft.json while it runs and on exit, which would undo the null.
 $AppProcesses | ForEach-Object { [void]$_.CloseMainWindow() }
 $deadline = (Get-Date).AddSeconds(15)
@@ -72,8 +83,6 @@ Write-Output "old agent_session (after close): $(Get-AgentSession $text)"
 
 # 3. Start the app without the watcher's Claude Code session variables.
 Get-ChildItem env: | Where-Object Name -match '^(CLAUDECODE|CLAUDE_CODE_|CLAUDE_PID)' | ForEach-Object { Remove-Item "env:$($_.Name)" }
-# The builder (claude -p) stops background subagents 10 min after its turn ends unless this is 0 (pitfall 2).
-$env:CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS = '0'
 Start-Process -FilePath $exe
 Write-Output "started $exe"
 Write-Output 'NOTE: the app may reopen another project (last_project): check the window shows the right project name.'

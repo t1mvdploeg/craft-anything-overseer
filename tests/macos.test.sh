@@ -49,6 +49,7 @@ ok "fresh ok" $(grep -q '^FRESH OK$' "$T/f1" && echo 1)
 ok "agent_session null (not empty string)" $([ "$(jq -c .agent_session "$P/craft.json")" = null ] && echo 1)
 ok "rest of craft.json kept" $([ "$(jq -c '[.name,.n]' "$P/craft.json")" = '["x",1]' ] && echo 1)
 ok "backup holds old id" $(grep -q '"abc-123"' "$P/craft.json.bak-r1" && echo 1)
+ok "builder setting written" $([ "$(jq -r .env.CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS "$P/.claude/settings.local.json")" = 0 ] && echo 1)
 ok "second run with same label refused" $(FS_SKIP_APP=1 bash "$M/fresh-session.sh" "$P" r1 | grep -q 'backup already exists' && echo 1)
 mkdir -p "$T/p2"; cp "$P/craft.json.bak-r1" "$T/p2/craft.json"
 ok "--no-open + tilde path" $(HOME="$T" FS_SKIP_APP= FS_APP="$T/CA.app" PATH="$T/bin:$PATH" bash "$M/fresh-session.sh" "~/p2" r2 --whatif --no-open | grep -q "FRESH OK (whatif)" && echo 1)
