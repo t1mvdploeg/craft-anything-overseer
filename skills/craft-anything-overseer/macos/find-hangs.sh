@@ -8,6 +8,7 @@
 # Builder = a claude process (name claude, or a .../claude/versions/<v> binary) that descends from
 # craft-anything / craft-anything-cli, OR whose command line holds the project dir (followed by / " space or end),
 # OR whose working directory is the project dir or inside it (catches a builder reparented to launchd).
+# A claude under CA whose working directory is another project is not a builder of this one.
 # The calling session's own ancestors are never builders.
 # Test hook: FH_PS=<file> with lines "pid<TAB>ppid<TAB>etime<TAB>comm<TAB>args[<TAB>cwd]" replaces the live ps.
 D=""; MODE=hangs; KILL=""; MIN=10
@@ -55,7 +56,8 @@ END {
     a = args[i] " "; byPath = 0; L = length(dir)
     for (s = a; (p = index(s, dir)) > 0; s = substr(s, p + L)) if (substr(s, p + L, 1) ~ /[\/" ]/) { byPath = 1; break }
     if (cwd[i] == dir || index(cwd[i], dir "/") == 1) byPath = 1
-    if (byPath || underCA(i)) { b[++n] = i; isB[i] = 1 }
+    # under CA counts only when its cwd is unknown: CA runs one builder per open project, cwd = that project
+    if (byPath || (underCA(i) && cwd[i] == "")) { b[++n] = i; isB[i] = 1 }
   }
   if (mode == "count") { print "BUILDERS " n; exit }
   if (mode == "show") { for (k = 1; k <= n; k++) { print "builder pid=" b[k] " cmd=" args[b[k]]; print "  parents: " chain(b[k]) } print n; exit }

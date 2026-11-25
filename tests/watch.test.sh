@@ -43,6 +43,9 @@ ok "expired resets_at: usage ?, no USAGE" $(grep -q '^STATUS usage ?%' $T/b3.out
 echo '{"rate_limits":{"five_hour":{"used_percentage":91,"resets_at":99999999999}}}' > "$T/u4.json"
 run b4 WATCH_BUILDER_COUNT=1 WATCH_USAGE_FILE="$T/u4.json"; waitfor $T/b4.out '^USAGE'; stop
 ok "future resets_at still counts" $(grep -q '^USAGE 91%' $T/b4.out && echo 1)
+echo '{"rate_limits":{"seven_day":{"used_percentage":92,"resets_at":99999999999}}}' > "$T/u5.json"
+run b5 WATCH_BUILDER_COUNT=1 WATCH_USAGE_FILE="$T/u5.json" WATCH_USAGE_WINDOW=seven_day; waitfor $T/b5.out '^USAGE'; stop
+ok "WATCH_USAGE_WINDOW=seven_day" $(grep -q '^USAGE 92%' $T/b5.out && echo 1)
 
 # 3 done + builders
 echo '{"items":[{"User":"round 1"},{"Step":{"step":"done","text":"x"}}]}' > "$D/feed.json"

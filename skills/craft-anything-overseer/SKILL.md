@@ -68,7 +68,7 @@ Only when no builder runs (STATUS step `done`, `find-hangs.ps1 -Count` prints `B
 
 The usage file is written by the user's statusline with `statusline/write-usage.sh` (see the README); without it usage is `?`.
 
-Start with the Monitor tool: `WATCH_USAGE_FILE=<usageFile> bash S/monitor/watch.sh <projectDir> <usageThreshold>` (`usageFile` as an absolute path; `~` expanded; if not set, the script defaults to `~/.claude/usage-limits.json`). Restart about every 25 minutes (15): stop the old watch first so there are no duplicates (it remembers the last DONE and the seen questions in a state file in the temp folder, so a restart does not repeat a DONE or lose a question). Run the monitor only while a round runs: not while idle (between rounds, waiting on the user) and not while paused. It prints one tagged line per event:
+Start with the Monitor tool: `WATCH_USAGE_FILE=<usageFile> bash S/monitor/watch.sh <projectDir> <usageThreshold>` (`usageFile` as an absolute path; `~` expanded; if not set, the script defaults to `~/.claude/usage-limits.json`); `WATCH_USAGE_WINDOW=seven_day` pauses on the 7-day limit instead of the 5-hour one (set `usageWindow` in settings). Restart about every 25 minutes (15): stop the old watch first so there are no duplicates (it remembers the last DONE and the seen questions in a state file in the temp folder, so a restart does not repeat a DONE or lose a question). Run the monitor only while a round runs: not while idle (between rounds, waiting on the user) and not while paused. It prints one tagged line per event:
 
 | Tag | Do |
 |---|---|

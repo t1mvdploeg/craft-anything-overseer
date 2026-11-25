@@ -16,7 +16,7 @@ cat > "$T/ps" <<P
 310${t}200${t}2-00:00:00${t}/usr/bin/find${t}find /
 400${t}1${t}01:00:00${t}/opt/u/.local/bin/claude${t}claude --add-dir "/p/my-app"
 403${t}1${t}01:00:00${t}/opt/u/.local/bin/claude${t}claude -p${t}/p/my-app/app
-404${t}1${t}01:00:00${t}/opt/u/.local/bin/claude${t}claude -p${t}/p/my-app-2
+405${t}100${t}40:00${t}/opt/u/.local/bin/claude${t}claude -p${t}/p/other-project
 401${t}1${t}01:00:00${t}/opt/u/.local/bin/claude${t}claude /p/my-app-2/x
 402${t}1${t}01:00:00${t}/usr/bin/vim${t}vim /p/my-app/a
 P
@@ -32,6 +32,7 @@ ok "kill suspect" $(bash "$M/find-hangs.sh" /p/my-app --kill 300 | grep -q '^KIL
 bash "$M/find-hangs.sh" /p/my-app --kill 303 > "$T/k"; e=$?
 ok "kill non-suspect refused, exit 3" $([ $e = 3 ] && grep -q '^REFUSED pid 303' "$T/k" && echo 1)
 ok "--show prints parent chain" $(bash "$M/find-hangs.sh" /p/my-app --show | grep -q 'parents: craft-anything(100) <- launchd(1)$' && echo 1)
+ok "claude under CA working in another project is not a builder" $(bash "$M/find-hangs.sh" /p/other-project --count | grep -q "BUILDERS 2" && echo 1)
 
 # fresh-session: refuses while a builder runs; whatif; real write with the app part skipped
 P="$T/proj"; mkdir -p "$P" "$T/CA.app"; export FS_APP="$T/CA.app"
