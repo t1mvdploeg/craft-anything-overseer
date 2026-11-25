@@ -27,7 +27,7 @@ Same workflow, other commands. Paths are POSIX (`~/...`); `%APPDATA%` is `~/Libr
 
 - Builder rule: a `claude` process (or a `.../claude/versions/<v>` binary) under `craft-anything` or `craft-anything-cli`, or with the project dir in its command line or as its working directory. The watcher's own session is never counted. `watch.sh` uses it automatically on macOS.
 - GUI setup, once: `brew install cliclick`, then System Settings > Privacy & Security > Accessibility and Screen Recording: enable the app that runs Claude Code (Terminal, iTerm, or Claude). Without Accessibility `gui.sh` stops with an error; without Screen Recording the png may show only wallpaper, so always look at it. Coordinates are points relative to the window; `gui.sh` saves screenshots at point size, so measure in the png and pass the numbers as they are.
-- Send a round without clicking (preferred on macOS): `fresh-session.sh <p> <label> --no-open` (CA stays closed: one writer on craft.json), then run in the background (Bash `run_in_background`) `"/Applications/Craft Anything.app/Contents/MacOS/craft-anything-cli" rebuild --continue-in <projectDir> --backend "Claude Code" - "$(cat round-12.txt)"`. Resume after a pause: `... rebuild --continue-in <projectDir> --resume - resume`. The CLI has no pause command: on USAGE, `kill -INT` the `craft-anything-cli` process, then `--count` must reach 0 and `ps -axo pid,ppid,args | grep -i claude` must show nothing of this project; otherwise tell the user. Verify as in Send a round step 7. Seen live (CA 0.6.1): the CLI writes `build-activity.log` and `feed.json`, so `watch.sh` works, and the builder is matched under `craft-anything-cli`. But approvals and questions go to the CLI's stdin, not to `checks/asks`: in the background they are declined at once (log: `FAIL ... consent_required`). Use the CLI route only for rounds where that is acceptable, or pass `--allow-run` when the user OKs running code without asking; otherwise use the GUI path.
+- Send a round without clicking (preferred on macOS): `fresh-session.sh <p> <label> --no-open` (CA stays closed: one writer on craft.json), then run in the background (Bash `run_in_background`) `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 "/Applications/Craft Anything.app/Contents/MacOS/craft-anything-cli" rebuild --continue-in <projectDir> --backend "Claude Code" - "$(cat round-12.txt)"`. Resume after a pause: `... rebuild --continue-in <projectDir> --resume - resume`. The CLI has no pause command: on USAGE, `kill -INT` the `craft-anything-cli` process, then `--count` must reach 0 and `ps -axo pid,ppid,args | grep -i claude` must show nothing of this project; otherwise tell the user. Verify as in Send a round step 7. Seen live (CA 0.6.1): the CLI writes `build-activity.log` and `feed.json`, so `watch.sh` works, and the builder is matched under `craft-anything-cli`. But approvals and questions go to the CLI's stdin, not to `checks/asks`: in the background they are declined at once (log: `FAIL ... consent_required`). Use the CLI route only for rounds where that is acceptable, or pass `--allow-run` when the user OKs running code without asking; otherwise use the GUI path.
 
 ## Never
 
@@ -62,7 +62,7 @@ Only when no builder runs (STATUS step `done`, `find-hangs.ps1 -Count` prints `B
 4. Screenshot: `pwsh -NoProfile -File S\windows\gui.ps1 -proc craft-anything -action info -out <png>` prints the window size and saves the window; look at it. Check the window shows the right project name: CA reopens its last project, which may be another one (then stop and tell the user). If the size differs from `buttons.windowSize`, locate input and send again (16); `buttons` are only a starting point. Coordinates are relative to the window.
 5. Paste (from Bash, multi-line text with quotes works): `pwsh -NoProfile -File "S/windows/gui.ps1" -action paste -x1 <inputX> -y1 <inputY> -text "$(cat round-12.txt)"` (it clicks the input, marks the whole field, pastes), then screenshot with `-out` and check the field. Empty (remote desktop): retry, then ask the user to paste (14).
 6. Click send: `-action click -x1 <sendX> -y1 <sendY>`, exactly at the send button, never lower.
-7. Verify: a new `"User":` in `feed.json`, `agent_session` in `craft.json` non-null and different from the old id that `fresh-session.ps1` printed, and `find-hangs.ps1 -Count` prints `BUILDERS 1` or more. Otherwise screenshot, retry once, then tell the user.
+7. Verify: a new `"User":` in `feed.json`, the builder started with `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` (macOS: `ps eww -p <builder pid> | tr ' ' '\n' | grep BG_WAIT`; fresh-session sets it), `agent_session` in `craft.json` non-null and different from the old id that `fresh-session.ps1` printed, and `find-hangs.ps1 -Count` prints `BUILDERS 1` or more. Otherwise screenshot, retry once, then tell the user.
 
 ## Monitor
 
@@ -75,11 +75,12 @@ Start with the Monitor tool: `WATCH_USAGE_FILE=<usageFile> bash S/monitor/watch.
 | `DONE` | After a round. |
 | `QUESTION <file>` | Builder Questions. |
 | `QUIET <n> min` | Watchdog. Not sent while the step is `done`. |
+| `ZERO TURN` | A builder turn ended with 0 tokens (5). If STATUS step is `done` and `BUILDERS 0`, send a short "continue" at once (Watchdog step 3) and treat the DONE that comes with it as not finished; if a builder still runs, CA carries on by itself: ignore. |
 | `FAIL 5x in a row` | 5 failed commands in a row (start lines do not count). Look at the log tail; tell the user if it is not an obvious transient. |
 | `USAGE <u>% >= <th>%: pause` | Usage limit. |
 | `STATUS usage ..%, step .., last activity .., turns .. \| last said` | Information only. `usage ?%` means unknown (file missing or its `resets_at` has passed), not a pause reason. |
 
-Log times run one hour behind the clock (13): judge quiet by file time.
+Log times are UTC (13): convert them for the user; judge quiet by file time.
 
 ## Watchdog (on QUIET)
 

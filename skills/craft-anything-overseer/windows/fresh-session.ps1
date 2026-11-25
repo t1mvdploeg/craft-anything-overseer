@@ -72,6 +72,8 @@ Write-Output "old agent_session (after close): $(Get-AgentSession $text)"
 
 # 3. Start the app without the watcher's Claude Code session variables.
 Get-ChildItem env: | Where-Object Name -match '^(CLAUDECODE|CLAUDE_CODE_|CLAUDE_PID)' | ForEach-Object { Remove-Item "env:$($_.Name)" }
+# The builder (claude -p) stops background subagents 10 min after its turn ends unless this is 0 (pitfall 2).
+$env:CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS = '0'
 Start-Process -FilePath $exe
 Write-Output "started $exe"
 Write-Output 'NOTE: the app may reopen another project (last_project): check the window shows the right project name.'

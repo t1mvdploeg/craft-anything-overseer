@@ -62,6 +62,12 @@ echo '{"items":[{"User":"round 1"},{"User":"round 2"},{"Step":{"step":"done","te
 run f WATCH_BUILDER_COUNT=0; waitfor $T/f.out '^DONE'; stop
 ok "new round gets its DONE" $(grep -q '^DONE' $T/f.out && echo 1)
 
+# 5 ZERO TURN: one line per new 0-token turn
+printf '10:00:00 said hi\n' > "$D/build-activity.log"
+run z WATCH_BUILDER_COUNT=1 WATCH_USAGE_FILE="$T/none.json"; sleep 2
+echo "10:05:00 note  The builder's turn ended (0 tokens in, 0 out)" >> "$D/build-activity.log"; waitfor $T/z.out '^ZERO TURN'
+echo "10:06:00 note  The builder's turn ended (900 tokens in, 5 out)" >> "$D/build-activity.log"; sleep 3; stop
+ok "one ZERO TURN, none for a real turn" $([ "$(cnt $T/z.out 'ZERO TURN')" = 1 ] && echo 1)
 ok "to_win_path" $([ "$(bash "$M/watch.sh" --to-win-path "C:/a b/c")" = 'C:\a b\c' ] && echo 1)
 # 4 round-usage
 mkdir -p "$T/r"; printf 'turn ended (7 tokens in, 7 out)\nb\nc\n1 note The builder'"'"'s turn ended (100 tokens in, 5 out)\n2 note turn ended (100 tokens in, 5 out)\n' > "$T/r/build-activity.log"

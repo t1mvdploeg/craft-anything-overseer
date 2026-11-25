@@ -26,7 +26,11 @@ builders() {
 while true; do
   sleep "$IV"; quiet=$((quiet+IV)); sinceStatus=$((sinceStatus+IV))
   m=$(wc -l < "$L" 2>/dev/null || echo "$n")
-  if [ "$m" -gt "$n" ]; then n=$m; quiet=0; quietSaid=0; fi
+  if [ "$m" -gt "$n" ]; then
+    # a turn that ended with 0 tokens did nothing (pitfall 5): say so at once
+    tail -n +"$((n+1))" "$L" | grep -q 'turn ended (0 tokens in' && echo "ZERO TURN"
+    n=$m; quiet=0; quietSaid=0
+  fi
   step=$(stepnow)
   # an idle or finished app is quiet by design
   [ "$step" != done ] && [ "$quiet" -ge "$QS" ] && [ $quietSaid = 0 ] && { echo "QUIET $((quiet/60)) min"; quietSaid=1; }

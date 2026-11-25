@@ -38,6 +38,8 @@ grep -q '"agent_session"' "$C" || echo 'WARNING: agent_session key not found; cr
 perl -0pi -e 's/"agent_session"\s*:\s*("(?:[^"\\]|\\.)*"|null)/"agent_session": null/g' "$C"
 
 # 3. Reopen. `open` starts it through launchd, so the watcher's CLAUDECODE/CLAUDE_CODE_* variables do not leak in.
+# CA's builder (claude -p) stops background subagents 10 min after its turn ends unless this is 0 (pitfall 2).
+[ -z "$FS_SKIP_APP" ] && launchctl setenv CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS 0
 if [ -z "$FS_SKIP_APP$NOOPEN" ]; then open -a "$APP" && echo "started $APP"; fi
 echo 'NOTE: the app may reopen another project (last_project): check the window shows the right project name.'
 echo 'FRESH OK'
