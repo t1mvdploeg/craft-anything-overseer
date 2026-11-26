@@ -27,6 +27,7 @@ These rules hold for you and for every subagent: copy this list into each subage
 - `find /` or any search over the whole disk. Search only inside the app folder and your own work folder.
 - ffmpeg without a guaranteed end (for example `tpad=stop=-1` pads forever).
 - Blind `sleep` loops, or polling `tasks/*.output` files.
+- Starting the app's window in the foreground to test it (it never exits; the run waits forever). Use its screenshot/test mode, or run it in the background with a time limit and stop it.
 - Ending the turn while subagents are still running (they are killed about 10 minutes later).
 - Starting console windows without hiding them (every ffmpeg/ffprobe/child process must start hidden).
 

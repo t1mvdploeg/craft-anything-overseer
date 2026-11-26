@@ -68,7 +68,8 @@ END {
   }
   m = 0
   for (c in seen) { nm = base(comm[c])
-    sus = nm == "find" || nm == "ffmpeg" || nm == "ffprobe" || ((nm == "bash" || nm == "sh" || nm == "zsh") && args[c] ~ /sleep/)
+    # the built app itself (a GUI app started to "test" it never exits on its own)
+    sus = nm == "find" || nm == "ffmpeg" || nm == "ffprobe" || ((nm == "bash" || nm == "sh" || nm == "zsh") && args[c] ~ /sleep/) || comm[c] ~ /target\/(debug|release)\//
     if (sus && age[c] >= min * 60) { S[c] = 1; m++; line[m] = sprintf("HANG pid=%s age=%dm name=%s cmd=%s", c, age[c] / 60, nm, substr(args[c], 1, 200)) }
   }
   if (mode == "kill") { if (kill in S) { print "OK " kill } else { print "REFUSED pid " kill " is not a suspect" } exit }

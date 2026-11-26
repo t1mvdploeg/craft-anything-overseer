@@ -13,6 +13,8 @@ cat > "$T/ps" <<P
 301${t}200${t}02:00${t}/opt/homebrew/bin/ffmpeg${t}ffmpeg -i a
 302${t}200${t}20:00${t}/bin/zsh${t}zsh -c until false; do sleep 30; done
 303${t}200${t}20:00${t}/bin/bash${t}bash -c npm test
+304${t}200${t}16:00${t}/tmp/x-target/debug/werkrooster${t}/tmp/x-target/debug/werkrooster --help
+306${t}200${t}03:00${t}/p/my-app/app/target/debug/werkrooster${t}target/debug/werkrooster
 310${t}200${t}2-00:00:00${t}/usr/bin/find${t}find /
 400${t}1${t}01:00:00${t}/opt/u/.local/bin/claude${t}claude --add-dir "/p/my-app"
 403${t}1${t}01:00:00${t}/opt/u/.local/bin/claude${t}claude -p${t}/p/my-app/app
@@ -26,6 +28,8 @@ h=$(bash "$M/find-hangs.sh" /p/my-app)
 ok "find / is a hang" $(echo "$h" | grep -q '^HANG pid=300 age=30m name=find' && echo 1)
 ok "zsh sleep loop is a hang" $(echo "$h" | grep -q '^HANG pid=302 ' && echo 1)
 ok "young ffmpeg is not" $(echo "$h" | grep -q 'pid=301' || echo 1)
+ok "app binary from target/debug running 16 min is a hang" $(echo "$h" | grep -q '^HANG pid=304 age=16m name=werkrooster' && echo 1)
+ok "young app binary is not" $(echo "$h" | grep -q 'pid=306' || echo 1)
 ok "npm test is not" $(echo "$h" | grep -q 'pid=303' || echo 1)
 ok "older-than-parent pid reuse is not" $(echo "$h" | grep -q 'pid=310' || echo 1)
 ok "kill suspect" $(bash "$M/find-hangs.sh" /p/my-app --kill 300 | grep -q '^KILLED pid 300' && echo 1)

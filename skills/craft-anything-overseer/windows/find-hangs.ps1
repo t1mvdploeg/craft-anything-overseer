@@ -20,7 +20,8 @@ function Get-Hangs {
     }
     $seen.Values | Where-Object {
         $n = $_.Name.ToLower()
-        $isSuspect = $n -in 'find.exe', 'ffmpeg.exe', 'ffprobe.exe' -or ($n -in 'bash.exe', 'sh.exe' -and $_.CommandLine -match 'sleep')
+        # the built app itself (a GUI app started to "test" it never exits on its own)
+        $isSuspect = $n -in 'find.exe', 'ffmpeg.exe', 'ffprobe.exe' -or ($n -in 'bash.exe', 'sh.exe' -and $_.CommandLine -match 'sleep') -or ($_.ExecutablePath -match '\\target\\(debug|release)\\')
         $isSuspect -and (($Now - $_.CreationDate).TotalMinutes -ge $MinMinutes)
     }
 }
