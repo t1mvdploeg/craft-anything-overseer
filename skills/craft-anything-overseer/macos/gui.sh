@@ -13,6 +13,8 @@ while [ $# -gt 0 ]; do [ "$1" = --out ] && { OUT="$2"; shift 2; continue; }; ARG
 
 osa() { osascript -e "$1" 2>&1; }
 pgrep -x craft-anything >/dev/null || { echo "no window"; exit 1; }
+# A locked screen takes no clicks (and screenshots come out black): say so, the overseer then uses the CLI route.
+[ -z "$GUI_SKIP_LOCK_CHECK" ] && ioreg -l -w0 2>/dev/null | grep -q 'CGSSessionScreenIsLocked"=Yes' && { echo "screen locked: use the CLI route"; exit 4; }
 frontmost() { osa 'tell application "System Events" to get bundle identifier of first process whose frontmost is true'; }
 # The user may be working on this Mac: remember their app, bring CA to the front (retry, they may click in
 # between), act at once, then give the focus back. Still refuse if CA cannot be brought to the front.
