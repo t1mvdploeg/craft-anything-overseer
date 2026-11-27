@@ -1,0 +1,22 @@
+{
+  "projectDir": "~/Documents/Craft Anything/my-app",
+  "appDir": "~/Documents/Craft Anything/my-app/app",
+  "issuesFile": "~/my-app-watch/craft-anything-issues.md",
+  "handoffFile": "~/my-app-watch/HANDOFF.md",
+  "goalsFile": "~/my-app-watch/goals.md",
+  "usageFile": "~/.claude/usage-limits.json",
+  "usageThreshold": 85,
+  "buttons": {
+    "input": [600, 780],
+    "send": [1000, 820],
+    "pause": [900, 820],
+    "windowSize": [1360, 860]
+  },
+  "checks": [
+    { "name": "npm test", "command": "npm test", "cwd": "~/Documents/Craft Anything/my-app/app" }
+  ],
+  "screenshots": [
+    "Launch the app against a scratch copy of the sample data",
+    "Open a sample document and capture what this round changed"
+  ]
+}

@@ -5,9 +5,31 @@ description: Use when a Claude Code session should watch and steer the Craft Any
 
 # Craft Anything overseer
 
-You are the watcher. Craft Anything (CA) runs the builder (`claude -p`); you send rounds, monitor, unblock and check. Windows only. Everything you write for the builder is English. Messages to the user are short, answer first, in the user's language.
+You are the watcher. Craft Anything (CA) runs the builder (`claude -p`); you send rounds, monitor, unblock and check. Windows and macOS: on macOS (`uname` is `Darwin`) read the macOS section first and use its commands wherever this file names a Windows one. Everything you write for the builder is English. Messages to the user are short, answer first, in the user's language.
 
 `S` = this skill's folder. Pitfalls with symptoms and fixes: `S\references\pitfalls.md` (numbers below refer to it). A worked example: `S\references\example.md`. In the Bash tool use forward slashes (`S/windows/...`) or the PowerShell tool; unquoted backslashes get lost in Bash.
+
+## macOS
+
+Same workflow, other commands. Paths are POSIX (`~/...`); `%APPDATA%` is `~/Library/Application Support/craft-anything` and `.../ai.storyteller.craft-anything`. Projects live in the projects folder from CA Settings: ask the user for `projectDir`, do not guess. Settings template: `S/craft-overseer.macos.example.json` (instead of the Windows one in Attach step 1).
+
+| Windows (this file) | macOS |
+|---|---|
+| `find-hangs.ps1 -ProjectDir <p> -Count` | `bash S/macos/find-hangs.sh <p> --count` |
+| `find-hangs.ps1 -ProjectDir <p>` / `-Kill <pid>` | `bash S/macos/find-hangs.sh <p>` / `--kill <pid>` |
+| `Show-Builders '<p>' -Show` (first live round) | `bash S/macos/find-hangs.sh <p> --show` |
+| `fresh-session.ps1 -ProjectDir <p> -Label <l> [-WhatIf]` | `bash S/macos/fresh-session.sh <p> <l> [--whatif]` |
+| `gui.ps1 -action info -out <png>` | `bash S/macos/gui.sh info --out <png>` |
+| `gui.ps1 -action paste -x1 X -y1 Y -text "..."` | `bash S/macos/gui.sh paste X Y "$(cat round-12.txt)" --out <png>` |
+| `gui.ps1 -action click -x1 X -y1 Y` | `bash S/macos/gui.sh click X Y` |
+| `close-console-windows.ps1` | not needed: no console windows pile up on macOS (18) |
+| `powercfg /requests`, screen lock off | `pmset -g assertions`; keep awake with `caffeinate -dims &` (note its pid in the handoff), screen lock off |
+
+- Builder rule: a `claude` process (or a `.../claude/versions/<v>` binary) under `craft-anything` or `craft-anything-cli`, or with the project dir in its command line or as its working directory. The watcher's own session is never counted. `watch.sh` uses it automatically on macOS.
+- Screen locked (`gui.sh` prints `screen locked: use the CLI route`, exit 4): send the round over the CLI route below instead of waiting. Seen live: the user's Mac locked overnight; with every approval on Allow (Attach step 5) the CLI round runs without questions. Quit CA first (`osascript -e 'tell application id "ai.storyteller.craft-anything" to quit'`) if fresh-session already reopened it.
+- Focus: `gui.sh` brings CA to the front (up to 6 tries, the user may be clicking elsewhere), acts at once, then gives the focus back to the app that was in front. So sending works while the user works on the Mac; it still refuses ("not in front") when CA cannot be brought forward.
+- GUI setup, once: `brew install cliclick`, then System Settings > Privacy & Security > Accessibility and Screen Recording: enable the app that runs Claude Code (Terminal, iTerm, or Claude). Without Accessibility `gui.sh` stops with an error; without Screen Recording the png may show only wallpaper, so always look at it. Coordinates are points relative to the window; `gui.sh` saves screenshots at point size, so measure in the png and pass the numbers as they are.
+- Send a round without clicking (preferred on macOS): `fresh-session.sh <p> <label> --no-open` (CA stays closed: one writer on craft.json), then run in the background (Bash `run_in_background`) `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 "/Applications/Craft Anything.app/Contents/MacOS/craft-anything-cli" rebuild --continue-in <projectDir> --backend "Claude Code" - "$(cat round-12.txt)"`. Resume after a pause: `... rebuild --continue-in <projectDir> --resume - resume`. The CLI has no pause command: on USAGE, `kill -INT` the `craft-anything-cli` process, then `--count` must reach 0 and `ps -axo pid,ppid,args | grep -i claude` must show nothing of this project; otherwise tell the user. Verify as in Send a round step 7. Seen live (CA 0.6.1): the CLI writes `build-activity.log` and `feed.json`, so `watch.sh` works, and the builder is matched under `craft-anything-cli`. But approvals and questions go to the CLI's stdin, not to `checks/asks`: in the background they are declined at once (log: `FAIL ... consent_required`). Use the CLI route only for rounds where that is acceptable, or pass `--allow-run` when the user OKs running code without asking; otherwise use the GUI path.
 
 ## Never
 
@@ -25,9 +47,10 @@ You are the watcher. Craft Anything (CA) runs the builder (`claude -p`); you sen
 2. Goals list: if `goalsFile` is missing, draft it with the user. The user's OK on the list covers all rounds. You compose rounds from it and from the builder's open points and continue until the list is done. New features outside the list: ask the user first.
 3. State: `pwsh -NoProfile -File S\windows\find-hangs.ps1 -ProjectDir <projectDir> -Count` prints `BUILDERS <n>`; the `watch.sh` STATUS line (step, usage; it prints at once); `gui.ps1 -action info`. Ready / run in progress / paused.
 4. Relay (optional): if settings have `relay`, run `relay.arm`. If the command is missing or fails, say so once and go on without relay. Without `relay` there is no automatic relay: you never call a relay command, and you keep the handoff current by updating `handoffFile` after every round.
-5. Unattended run (user away): ask the user to switch off screen lock and sleep (check `powercfg /requests`). A locked or sleeping PC breaks every click, including the Pause at the usage limit. Over a remote desktop do not disconnect in a way that locks the session.
-6. Start the monitor (next section). Start the console-window closer hidden only if console windows actually pile up (18): `Start-Process pwsh -WindowStyle Hidden -ArgumentList '-NoProfile','-File','<S>\windows\close-console-windows.ps1','-TitleSuffix','\ffmpeg.exe,\ffprobe.exe'`; note its pid in the handoff.
-7. First live round only: while a builder runs, `pwsh -NoProfile -Command ". '<S>\windows\builder.ps1'; Show-Builders '<projectDir>' -Show"` prints the builder's command line and parent chain. Check the count is >= 1 and the chain looks right (builder under `craft-anything.exe`, or the project dir in its command line). If the match does not work, tell the user: DONE, the watchdog and fresh-session cannot be trusted until the rule is fixed. Record what you saw in `handoffFile` (and in `issuesFile` if the match fails).
+5. Approvals: read `"approvals"` in `<projectDir>/craft.json`. If any value is not `"allow"`, ask the user to set every row to Allow in CA (Approvals link under the input; see README). Otherwise rounds stall on "May I allow ...?" cards (log: `Waiting for your answer: Allow: ...`), and on the CLI route they are declined.
+6. Unattended run (user away): ask the user to switch off screen lock and sleep (check `powercfg /requests`). A locked or sleeping PC breaks every click, including the Pause at the usage limit. Over a remote desktop do not disconnect in a way that locks the session.
+7. Start the monitor (next section). Start the console-window closer hidden only if console windows actually pile up (18): `Start-Process pwsh -WindowStyle Hidden -ArgumentList '-NoProfile','-File','<S>\windows\close-console-windows.ps1','-TitleSuffix','\ffmpeg.exe,\ffprobe.exe'`; note its pid in the handoff.
+8. First live round only: while a builder runs, `pwsh -NoProfile -Command ". '<S>\windows\builder.ps1'; Show-Builders '<projectDir>' -Show"` prints the builder's command line and parent chain. Check the count is >= 1 and the chain looks right (builder under `craft-anything.exe`, or the project dir in its command line). If the match does not work, tell the user: DONE, the watchdog and fresh-session cannot be trusted until the rule is fixed. Record what you saw in `handoffFile` (and in `issuesFile` if the match fails).
 
 Paths: pass `-ProjectDir` to `find-hangs.ps1` and `fresh-session.ps1` as a Windows path with backslashes. `watch.sh` and `round-usage.sh` also accept forward slashes.
 
@@ -41,31 +64,33 @@ Only when no builder runs (STATUS step `done`, `find-hangs.ps1 -Count` prints `B
 4. Screenshot: `pwsh -NoProfile -File S\windows\gui.ps1 -proc craft-anything -action info -out <png>` prints the window size and saves the window; look at it. Check the window shows the right project name: CA reopens its last project, which may be another one (then stop and tell the user). If the size differs from `buttons.windowSize`, locate input and send again (16); `buttons` are only a starting point. Coordinates are relative to the window.
 5. Paste (from Bash, multi-line text with quotes works): `pwsh -NoProfile -File "S/windows/gui.ps1" -action paste -x1 <inputX> -y1 <inputY> -text "$(cat round-12.txt)"` (it clicks the input, marks the whole field, pastes), then screenshot with `-out` and check the field. Empty (remote desktop): retry, then ask the user to paste (14).
 6. Click send: `-action click -x1 <sendX> -y1 <sendY>`, exactly at the send button, never lower.
-7. Verify: a new `"User":` in `feed.json`, `agent_session` in `craft.json` non-null and different from the old id that `fresh-session.ps1` printed, and `find-hangs.ps1 -Count` prints `BUILDERS 1` or more. Otherwise screenshot, retry once, then tell the user.
+7. Verify: a new `"User":` in `feed.json`, `<projectDir>/.claude/settings.local.json` has `env.CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS = "0"` (fresh-session writes it; CA passes the builder a filtered environment, so a process variable does not reach it), `agent_session` in `craft.json` non-null and different from the old id that `fresh-session.ps1` printed, and `find-hangs.ps1 -Count` prints `BUILDERS 1` or more. Otherwise screenshot, retry once, then tell the user.
 
 ## Monitor
 
 The usage file is written by the user's statusline with `statusline/write-usage.sh` (see the README); without it usage is `?`.
 
-Start with the Monitor tool: `WATCH_USAGE_FILE=<usageFile> bash S/monitor/watch.sh <projectDir> <usageThreshold>` (`usageFile` as an absolute path; `~` expanded; if not set, the script defaults to `~/.claude/usage-limits.json`). Restart about every 25 minutes (15): stop the old watch first so there are no duplicates (it remembers the last DONE and the seen questions in a state file in the temp folder, so a restart does not repeat a DONE or lose a question). Run the monitor only while a round runs: not while idle (between rounds, waiting on the user) and not while paused. It prints one tagged line per event:
+Start with the Monitor tool: `WATCH_USAGE_FILE=<usageFile> bash S/monitor/watch.sh <projectDir> <usageThreshold>` (`usageFile` as an absolute path; `~` expanded; if not set, the script defaults to `~/.claude/usage-limits.json`); `WATCH_USAGE_WINDOW=seven_day` pauses on the 7-day limit instead of the 5-hour one (set `usageWindow` in settings). Restart about every 25 minutes (15): stop the old watch first so there are no duplicates (it remembers the last DONE and the seen questions in a state file in the temp folder, so a restart does not repeat a DONE or lose a question). Run the monitor only while a round runs: not while idle (between rounds, waiting on the user) and not while paused. It prints one tagged line per event:
 
 | Tag | Do |
 |---|---|
 | `DONE` | After a round. |
 | `QUESTION <file>` | Builder Questions. |
 | `QUIET <n> min` | Watchdog. Not sent while the step is `done`. |
+| `ZERO TURN` | A builder turn ended with 0 tokens (5). If STATUS step is `done` and `BUILDERS 0`, send a short "continue" at once (Watchdog step 3) and treat the DONE that comes with it as not finished; if a builder still runs, CA carries on by itself: ignore. |
 | `FAIL 5x in a row` | 5 failed commands in a row (start lines do not count). Look at the log tail; tell the user if it is not an obvious transient. |
 | `USAGE <u>% >= <th>%: pause` | Usage limit. |
 | `STATUS usage ..%, step .., last activity .., turns .. \| last said` | Information only. `usage ?%` means unknown (file missing or its `resets_at` has passed), not a pause reason. |
 
-Log times run one hour behind the clock (13): judge quiet by file time.
+Log times are UTC (13): convert them for the user; judge quiet by file time.
 
 ## Watchdog (on QUIET)
 
 1. `pwsh -NoProfile -File S\windows\find-hangs.ps1 -ProjectDir <projectDir>` prints `HANG pid=.. age=..m name=.. cmd=..` lines or `NO HANGS`.
 2. Kill an offender with `-Kill <pid>` (only suspects are allowed; `REFUSED ... exit 3` otherwise). Kill `find /`, endless ffmpeg, blind sleep loops (1, 10, 12).
 3. Turn ended with 0 tokens in the log (5), or builder idle after a kill: send a short "continue" via the input field. Twice in a row: tell the user.
-4. `NO HANGS` and still quiet: screenshot once, set a 15-minute wakeup, then run `find-hangs.ps1` again before asking the user (QUIET fires only once per quiet spell).
+4. Log tail says `Waiting for your answer: Allow: ...`: an approval card waits (status *Needs you*). If the user set approvals to Allow (Attach step 5), answer the card with **Allow once**, never through the Approvals link; otherwise ask the user.
+5. `NO HANGS` and still quiet: screenshot once, set a 15-minute wakeup, then run `find-hangs.ps1` again before asking the user (QUIET fires only once per quiet spell).
 
 ## Builder Questions
 

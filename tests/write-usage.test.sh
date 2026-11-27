@@ -9,7 +9,7 @@ out=$(echo '{"model":"x","rate_limits":{"five_hour":{"used_percentage":42,"reset
 ok "writes five_hour 42" $([ "$(jq .five_hour.used_percentage "$F")" = 42 ] && echo 1)
 ok "writes seven_day 7" $([ "$(jq .seven_day.used_percentage "$F")" = 7 ] && echo 1)
 ok "prints nothing" $([ -z "$out" ] && echo 1)
-ok "no temp file left" $([ "$(ls "$T" | wc -l)" = 1 ] && echo 1)
+ok "no temp file left" $([ "$(ls "$T" | wc -l | tr -d " ")" = 1 ] && echo 1)
 echo '{"model":"x"}' | bash "$S" "$F"
 ok "no rate_limits: file unchanged" $([ "$(jq .five_hour.used_percentage "$F")" = 42 ] && echo 1)
 G="$T/new.json"; echo '{}' | bash "$S" "$G"

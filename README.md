@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://github.com/t1mvdploeg/craft-anything-overseer/actions/workflows/test.yml"><img src="https://github.com/t1mvdploeg/craft-anything-overseer/actions/workflows/test.yml/badge.svg" alt="tests"></a>
   <img src="https://img.shields.io/badge/Claude%20Code-plugin-555" alt="Claude Code plugin">
-  <img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="Windows only">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-0078D4" alt="Windows and macOS">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license">
 </p>
 
@@ -33,10 +33,13 @@ In Claude Code:
 ```
 
 1. In your working folder, copy `skills/craft-anything-overseer/craft-overseer.example.json` to `craft-overseer.json` and fill in your project (`projectDir` such as `%USERPROFILE%\Documents\Craft Anything\my-app`, a goals file, your `checks` such as `npm test`).
-2. Optional, for usage-aware pausing: add `statusline/write-usage.sh` to your Claude Code statusline. It writes the rate limits to `~/.claude/usage-limits.json` (the `usageFile` setting). Without that file usage shows as `?` and nothing pauses.
-3. Say "watch Craft Anything" or type `/craft-anything-overseer`.
+2. **In Craft Anything, set the builder's approvals to Allow** for the project: click **Approvals** (right under the chat input), set every row (Reading the web, Other commands, Files outside the project, Pushing and publishing, Deleting outside the project, System changes, Other tools) to **Allow**. It is stored per project in `craft.json` (`"approvals"`). Without it the builder stops at a "May I allow ...?" card (status *Needs you*) and waits: the overseer never clicks Approvals, so the round stalls until you answer. Through `craft-anything-cli` an unanswered approval is declined at once. Allow means the builder runs commands and changes things outside the project without asking: only do this for projects you trust.
+3. Optional, for usage-aware pausing: add `statusline/write-usage.sh` to your Claude Code statusline. It writes the rate limits to `~/.claude/usage-limits.json` (the `usageFile` setting). Without that file usage shows as `?` and nothing pauses.
+4. Say "watch Craft Anything" or type `/craft-anything-overseer`.
 
 Needs Windows, PowerShell 7, Git Bash and `jq`.
+
+**macOS**: needs `jq` and, for the GUI, `brew install cliclick` plus Accessibility and Screen Recording for the app that runs Claude Code. Copy `craft-overseer.macos.example.json` instead. Scripts are in `skills/craft-anything-overseer/macos/` (`find-hangs.sh`, `fresh-session.sh`, `gui.sh`); `watch.sh` picks them up on its own. Rounds can also go through `craft-anything-cli rebuild --continue-in` without clicking. Tests: `bash tests/macos.test.sh`. Not live-proven on a real round yet.
 
 ## What it does
 
@@ -77,7 +80,7 @@ In one long rebuild, sending each round to a fresh builder conversation with a f
 
 ## What it does not do
 
-- Windows only. The GUI scripts need an unlocked, awake screen.
+- Windows and macOS. The GUI scripts need an unlocked, awake screen.
 - Not live-proven yet: the builder process match and a real close and restart of CA. The skill checks both on the first live round.
 - The relay needs your own relay command; none is included.
 - It does not decide what to build: you approve a goals list, it works through it.

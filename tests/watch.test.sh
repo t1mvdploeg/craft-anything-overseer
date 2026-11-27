@@ -43,6 +43,9 @@ ok "expired resets_at: usage ?, no USAGE" $(grep -q '^STATUS usage ?%' $T/b3.out
 echo '{"rate_limits":{"five_hour":{"used_percentage":91,"resets_at":99999999999}}}' > "$T/u4.json"
 run b4 WATCH_BUILDER_COUNT=1 WATCH_USAGE_FILE="$T/u4.json"; waitfor $T/b4.out '^USAGE'; stop
 ok "future resets_at still counts" $(grep -q '^USAGE 91%' $T/b4.out && echo 1)
+echo '{"rate_limits":{"seven_day":{"used_percentage":92,"resets_at":99999999999}}}' > "$T/u5.json"
+run b5 WATCH_BUILDER_COUNT=1 WATCH_USAGE_FILE="$T/u5.json" WATCH_USAGE_WINDOW=seven_day; waitfor $T/b5.out '^USAGE'; stop
+ok "WATCH_USAGE_WINDOW=seven_day" $(grep -q '^USAGE 92%' $T/b5.out && echo 1)
 
 # 3 done + builders
 echo '{"items":[{"User":"round 1"},{"Step":{"step":"done","text":"x"}}]}' > "$D/feed.json"
@@ -59,10 +62,16 @@ echo '{"items":[{"User":"round 1"},{"User":"round 2"},{"Step":{"step":"done","te
 run f WATCH_BUILDER_COUNT=0; waitfor $T/f.out '^DONE'; stop
 ok "new round gets its DONE" $(grep -q '^DONE' $T/f.out && echo 1)
 
-ok "to_win_path" $([ "$(bash $M/watch.sh --to-win-path "C:/a b/c")" = 'C:\a b\c' ] && echo 1)
+# 5 ZERO TURN: one line per new 0-token turn
+printf '10:00:00 said hi\n' > "$D/build-activity.log"
+run z WATCH_BUILDER_COUNT=1 WATCH_USAGE_FILE="$T/none.json"; sleep 2
+echo "10:05:00 note  The builder's turn ended (0 tokens in, 0 out)" >> "$D/build-activity.log"; waitfor $T/z.out '^ZERO TURN'
+echo "10:06:00 note  The builder's turn ended (900 tokens in, 5 out)" >> "$D/build-activity.log"; sleep 3; stop
+ok "one ZERO TURN, none for a real turn" $([ "$(cnt $T/z.out 'ZERO TURN')" = 1 ] && echo 1)
+ok "to_win_path" $([ "$(bash "$M/watch.sh" --to-win-path "C:/a b/c")" = 'C:\a b\c' ] && echo 1)
 # 4 round-usage
 mkdir -p "$T/r"; printf 'turn ended (7 tokens in, 7 out)\nb\nc\n1 note The builder'"'"'s turn ended (100 tokens in, 5 out)\n2 note turn ended (100 tokens in, 5 out)\n' > "$T/r/build-activity.log"
-ok "round-usage count" $([ "$(bash $M/round-usage.sh "$T/r")" = 5 ] && echo 1)
-ok "round-usage sum" $([ "$(bash $M/round-usage.sh "$T/r" 3)" = "ROUND input=200 output=10 turns=2" ] && echo 1)
+ok "round-usage count" $([ "$(bash "$M/round-usage.sh" "$T/r")" = 5 ] && echo 1)
+ok "round-usage sum" $([ "$(bash "$M/round-usage.sh" "$T/r" 3)" = "ROUND input=200 output=10 turns=2" ] && echo 1)
 
 echo "passed $pass, failed $failn"; [ $failn = 0 ]
